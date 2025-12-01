@@ -151,8 +151,15 @@ public class SeriesImpl<T> implements Series<T> {
 
     @Override
     public Series<T> withIndex(List<Integer> newIndex) {
-        // Todo: Project 2: To be implemented.
-        throw new UnsupportedOperationException("To be implemented...");
+         if (newIndex == null) {
+            throw new IllegalArgumentException("The new index cannot be null.");
+        }
+        for (int idx : newIndex) {
+            if (idx < 0 || idx >= size()) {
+                throw new IllegalArgumentException("Index is out of bounds: " + idx);
+            }
+        }
+        return new SeriesImpl<>(newIndex, this.values);
 
         // Returns a new Series whose index is obtained by selecting positions from
         // the current Series according to newIndex.
@@ -212,8 +219,16 @@ public class SeriesImpl<T> implements Series<T> {
     @Override
     public Series<T> selectByMask(Series<Boolean> mask) {
         // Todo: Project 2: To be implemented.
-        throw new UnsupportedOperationException("To be implemented...");
-
+        if (mask.size() != size()) {
+            throw new IllegalArgumentException("Series sizes must match for combination.");
+        }
+        List<Integer> newIndices = new ArrayList<>();
+        for (int i = 0; i < size(); i++) {
+            if (Boolean.TRUE.equals(mask.get(i))) {
+                newIndices.insertItem(index.getItem(i));
+            }
+        }
+        return this.withIndex(newIndices);
         // Returns a new Series containing only the elements whose corresponding
         // mask values are true.
         //
@@ -245,8 +260,17 @@ public class SeriesImpl<T> implements Series<T> {
     @Override
     public double sum() {
         // Todo: Project 2: To be implemented.
-        throw new UnsupportedOperationException("To be implemented...");
-
+        double sum = 0;
+            try {
+                for (int i = 0; i < size(); i++) {
+                    double val = asDouble(get(i));
+                    sum += val;
+                }
+            } catch (Exception e) {
+                throw new UnsupportedOperationException("The series is not numeric");
+            }
+            
+        return sum;
         // Note: This function should only consider values referenced by the index.
         // Note: The series can hold any type of values. Attempt to convert values to
         // double by using Series.asDouble(x) function.
@@ -254,9 +278,7 @@ public class SeriesImpl<T> implements Series<T> {
 
     @Override
     public long count() {
-        // Todo: Project 2: To be implemented.
-        throw new UnsupportedOperationException("To be implemented...");
-
+        return (long)this.size();
         // Note: This function should only consider values referenced by the index.
         // Note: The series can hold any type of values. Attempt to convert values to
         // double by using Series.asDouble(x) function.
@@ -284,22 +306,31 @@ public class SeriesImpl<T> implements Series<T> {
 
     @Override
     public double max() {
-        // Todo: Project 2: To be implemented.
-        throw new UnsupportedOperationException("To be implemented...");
-
-        // Note: This function should only consider values referenced by the index.
-        // Note: The series can hold any type of values. Attempt to convert values to
-        // double by using Series.asDouble(x) function.
+        if (size() == 0) {
+            throw new IllegalStateException("Series is empty. Cannot compute max.");
+        }
+    
+        double maxInSeries = asDouble(get(0)); 
+        for (int i = 1; i < size(); i++) {
+            maxInSeries = Math.max(maxInSeries, asDouble(get(i))); // Update maxValue by comparing
+        }
+        return maxInSeries;
     }
 
     @Override
     public double var() {
-        // Todo: Project 2: To be implemented.
-        throw new UnsupportedOperationException("To be implemented...");
-
-        // Note: This function should only consider values referenced by the index.
-        // Note: The series can hold any type of values. Attempt to convert values to
-        // double by using Series.asDouble(x) function.
+        if (size() <= 1) {
+            throw new IllegalStateException("Series needs to have 1+ element to compute variance.");
+        }
+        double mean = mean(); 
+        double diffs = 0.0;
+    
+        for (int i = 0; i < size(); i++) {
+            double diff = asDouble(get(i)) - mean; 
+            diffs += diff * diff;     
+        }
+    
+        return diffs / (size() - 1); // Divide by (size - 1) for sample variance
     }
 
     @Override
@@ -314,9 +345,24 @@ public class SeriesImpl<T> implements Series<T> {
 
     @Override
     public double median() {
-        // Todo: Project 2: To be implemented.
-        throw new UnsupportedOperationException("To be implemented...");
-
+         List<Double> sortedList = new ArrayList<>();
+            try {
+                for (int i = 0; i < size(); i++) {
+                    double val = asDouble(get(i));
+                    sortedList.insertItem(val);
+                }
+            } catch (Exception e) {
+                throw new UnsupportedOperationException("The series is not numeric");
+            }
+            
+        if (sortedList.size() % 2 != 0) {
+            int ind = ((size() + 1) / 2) - 1;
+            return sortedList.getItem(ind);
+        } else {
+            int ind1 = (size() / 2) - 1;
+            int ind2 = size() / 2;
+            return (sortedList.getItem(ind1) + sortedList.getItem(ind2)) / 2;
+        }
         // Note: This function should only consider values referenced by the index.
         // Note: The series can hold any type of values. Attempt to convert values to
         // double by using Series.asDouble(x) function.
