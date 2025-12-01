@@ -109,8 +109,15 @@ public class SeriesImpl<T> implements Series<T> {
 
     @Override
     public List<T> values() {
-        // Todo: Project 2: To be implemented.
-        throw new UnsupportedOperationException("To be implemented...");
+       List<T> projected = new ArrayList<>(index.size());
+
+        // For each position in index, pull the corresponding value
+        for (int idx : index) {
+            projected.add(vals.get(idx));
+        }
+
+        // Return as an ImmutableList<T>
+        return ImmutableList.copy(projected);
 
         // This method returns a new list containing the values of the Series,
         // in the order specified by the index list.
@@ -130,8 +137,14 @@ public class SeriesImpl<T> implements Series<T> {
 
     @Override
     public Set<T> unique() {
-        // Todo: Project 2: To be implemented.
-        throw new UnsupportedOperationException("To be implemented...");
+        Set<T> uniques = new HashSet<>();
+
+        // Only consider values referenced by the index
+        for (int idx : index) {
+            uniques.add(vals.get(idx));
+        }
+
+        return uniques;
 
         // This method returns a Set containing the unique values in the Series.
         // Only the values referenced by the index should be considered.
@@ -259,7 +272,6 @@ public class SeriesImpl<T> implements Series<T> {
 
     @Override
     public double sum() {
-        // Todo: Project 2: To be implemented.
         double sum = 0;
             try {
                 for (int i = 0; i < size(); i++) {
@@ -286,18 +298,39 @@ public class SeriesImpl<T> implements Series<T> {
 
     @Override
     public double mean() {
-        // Todo: Project 2: To be implemented.
-        throw new UnsupportedOperationException("To be implemented...");
+        if (size() == 0) {
+        throw new IllegalStateException("Cannot compute mean of empty Series.");
+        }
 
-        // Note: This function should only consider values referenced by the index.
-        // Note: The series can hold any type of values. Attempt to convert values to
-        // double by using Series.asDouble(x) function.
-    }
+        double sum = 0.0;
+
+        // Sum only the values referenced by the index
+        for (int idx : index) {
+            T value = vals.get(idx);
+            sum += Series.asDouble(value);   // convert using provided utility
+        }
+
+        return sum / index.size();
+        }
 
     @Override
     public double min() {
-        // Todo: Project 2: To be implemented.
-        throw new UnsupportedOperationException("To be implemented...");
+        if (size() == 0) {
+        throw new IllegalStateException("Cannot compute min of empty Series.");
+        }
+
+        // Initialize min with the first referenced value
+        double minValue = Series.asDouble(vals.get(index.get(0)));
+
+        // Scan through the remaining referenced values
+        for (int i = 1; i < index.size(); i++) {
+            double v = Series.asDouble(vals.get(index.get(i)));
+            if (v < minValue) {
+                minValue = v;
+            }
+        }
+
+        return minValue;
 
         // Note: This function should only consider values referenced by the index.
         // Note: The series can hold any type of values. Attempt to convert values to
@@ -335,8 +368,7 @@ public class SeriesImpl<T> implements Series<T> {
 
     @Override
     public double std() {
-        // Todo: Project 2: To be implemented.
-        throw new UnsupportedOperationException("To be implemented...");
+    return Math.sqrt(this.var());
 
         // Note: This function should only consider values referenced by the index.
         // Note: The series can hold any type of values. Attempt to convert values to
