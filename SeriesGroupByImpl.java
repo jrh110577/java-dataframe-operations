@@ -73,8 +73,17 @@ public class SeriesGroupByImpl<T> implements SeriesGroupBy<T> {
      *         series where this unique value appears.
      */
     private Map<T, List<Integer>> groupByValues() {
-        // Todo: Project 2: To be implemented.
-        throw new UnsupportedOperationException("To be implemented...");
+        Map<T, List<Integer>> groupMap = new HashMap<>();
+
+        for (int i = 0; i < series.size(); i++) {
+            T value = series.get(i);  // Get the value at index i from the series
+            if (!groupMap.containsKey(value)) {
+                groupMap.put(value, new ArrayList<>());
+            }
+            groupMap.get(value).insertItem(i); 
+        }
+
+        return groupMap;
 
         // Create a map where each key is a unique value from the Series.
         // The value for each key is a list of integer positions (indices)
@@ -132,8 +141,31 @@ public class SeriesGroupByImpl<T> implements SeriesGroupBy<T> {
 
     @Override
     public <R> Series<R> aggregate(AggregateFunction<T, R> aggregator) {
-        // Todo: Project 2: To be implemented.
-        throw new UnsupportedOperationException("To be implemented...");
+         if (aggregator == null) {
+            throw new IllegalArgumentException("Aggregator function cannot be null.");
+        }
+    
+        List<R> aggregatedValues = new ArrayList<>(index.size());
+    
+        //  the list of index positions for that key from the groups map.
+        for (T groupKey : index) {
+            List<Integer> indices = groups.get(groupKey);
+    
+            //construct a sub-Series from the original Series.
+            List<T> groupElements = new ArrayList<>(indices.size());
+            for (int ind : indices) {
+                groupElements.insertItem(series.get(ind));
+            }
+    
+            
+            Series<T> subSeries = new SeriesImpl<>(groupElements);
+    
+            // Apply the aggregator function to obtain the result
+            R aggregatedResult = aggregator.apply(subSeries);
+            aggregatedValues.insertItem(aggregatedResult);
+
+        }
+        return new SeriesImpl<>(aggregatedValues); 
 
         // Applies the given aggregate function to each group in the grouped Series.
         //
@@ -154,5 +186,53 @@ public class SeriesGroupByImpl<T> implements SeriesGroupBy<T> {
         // Aggregated result: Series([3, 2])
         //
         // If the aggregator is null, throw IllegalArgumentException.
+    }
+    public static void main(String[] args) {
+        List<String> values = List.of("apple", "banana", "apple", "banana", "apple", "orange");
+        Series<String> series = new SeriesImpl<>(values);
+
+        // Creating a grouped Series
+        SeriesGroupBy<String> groupBy = new SeriesGroupByImpl<>(series);
+
+        // Display group mappings
+        System.out.println("Groups: " + groupBy.groups()); 
+        // Expected Output: { "apple" -> [0, 2, 4], "banana" -> [1, 3], "orange" -> [5] }
+
+        // Implementing a count aggregator function
+        AggregateFunction<String, Integer> countAggregator = subSeries -> subSeries.size();
+
+        // Applying aggregation
+        Series<Integer> aggregatedSeries = groupBy.aggregate(countAggregator);
+
+        // Printing aggregated results
+        System.out.println("Aggregated counts: " + aggregatedSeries.values()); 
+        // Expected Output: Series([3, 2, 1])
+
+        // Example 2: Grouping and Aggregating a Series of Numbers (Sum Aggregation)
+        List<Integer> numbers = List.of(5, 10, 5, 20, 10, 5, 20);
+        Series<Integer> numberSeries = new SeriesImpl<>(numbers);
+
+        SeriesGroupBy<Integer> numberGroupBy = new SeriesGroupByImpl<>(numberSeries);
+
+        // Display group mappings
+        System.out.println("Number Groups: " + numberGroupBy.groups());
+        // Expected Output: { 5 -> [0, 2, 5], 10 -> [1, 4], 20 -> [3, 6] }
+
+        // Sum aggregator function
+        AggregateFunction<Integer, Integer> sumAggregator = subSeries -> {
+            int sum = 0;
+            for (int num : subSeries) {
+                sum += num;
+            }
+            return sum;
+        };
+
+        // Applying aggregation
+        Series<Integer> sumAggregatedSeries = numberGroupBy.aggregate(sumAggregator);
+
+        // Printing aggregated results
+        System.out.println("Aggregated sums: " + sumAggregatedSeries.values());
+        // Expected Output: Series([15, 20, 40])
+
     }
 }
