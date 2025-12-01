@@ -1,7 +1,8 @@
 # java-dataframe-operations
 A custom implementation of core DataFrame functionality in Java, inspired by Python’s pandas library. This project demonstrates skills in data structures, algorithm design, and backend data processing for tabular datasets.
 
-Overview
+Overview:
+
 This project implements a lightweight DataFrame system in Java capable of:
 
 Creating and storing tabular data, 
